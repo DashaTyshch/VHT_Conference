@@ -11,7 +11,11 @@ import com.google.devrel.training.conference.Constants;
 import com.google.devrel.training.conference.domain.Profile;
 import com.google.devrel.training.conference.form.ProfileForm;
 import com.google.devrel.training.conference.form.ProfileForm.TeeShirtSize;
+import com.google.devrel.training.conference.servlet.Announcement;
 import com.googlecode.objectify.Key;
+
+import com.google.appengine.api.memcache.MemcacheService;
+import com.google.appengine.api.memcache.MemcacheServiceFactory;
 
 /**
  * Defines conference APIs.
@@ -48,7 +52,7 @@ public class ConferenceApi {
 
     // TODO 1 Pass the ProfileForm parameter
     // TODO 2 Pass the User parameter
-    public Profile saveProfile(ProfileForm profileForm, User user) throws UnauthorizedException {
+    public Profile saveProfile(User user, ProfileForm profileForm) throws UnauthorizedException {
         String userId = null;
         String mainEmail = null;
         String displayName = "Your name will go here";
@@ -63,14 +67,14 @@ public class ConferenceApi {
         // TODO 1
         // Set the teeShirtSize to the value sent by the ProfileForm, if sent
         // otherwise leave it as the default value
-        if (profileForm.getTeeShirtSize() != TeeShirtSize.NOT_SPECIFIED)
+        if (profileForm.getTeeShirtSize() != null)
             teeShirtSize = profileForm.getTeeShirtSize();
 
 
         // TODO 1
         // Set the displayName to the value sent by the ProfileForm, if sent
         // otherwise set it to null
-        if(!profileForm.getDisplayName().equals(""))
+        if(profileForm.getDisplayName() != null)
             displayName = profileForm.getDisplayName();
 
         // TODO 2
@@ -85,8 +89,11 @@ public class ConferenceApi {
         // Create a new Profile entity from the
         // userId, displayName, mainEmail and teeShirtSize
         Profile profile = getProfile(user);
-        if (profile == null)
+        if (profile == null) {
+            if(profileForm.getDisplayName()==null)
+                displayName = extractDefaultDisplayNameFromEmail(mainEmail);
             profile = new Profile(userId, displayName, mainEmail, teeShirtSize);
+        }
         else
             profile.update(displayName,teeShirtSize);
 
@@ -119,5 +126,13 @@ public class ConferenceApi {
         Key<Profile> key = Key.create(Profile.class,userId);
         Profile profile = ofy().load().key(key).now();
         return profile;
+    }
+    // Here???
+    @ApiMethod(name="getAnnouncement", path = "announcement", httpMethod = HttpMethod.GET)
+    public Announcement getAnnouncement(){
+        //TODO GET announcement from memcache by key and if it exist return it
+        // Get an entry out of Memcache <T>
+        myvalue = memcacheService.get(key);
+        return null;
     }
 }
